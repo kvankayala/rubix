@@ -25,3 +25,4 @@ if [[ $? -ne 0 ]]; then
 fi
 mvn cobertura:cobertura
 bash <(curl -s https://codecov.io/bash)
+
