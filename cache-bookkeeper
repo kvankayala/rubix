@@ -1,0 +1,141 @@
+#!/bin/bash -e
+
+d=`dirname $0`
+d=`cd "$d"; pwd`
+
+RUN_DIR=/media/ephemeral0/bks
+PID_FILE=${RUN_DIR}/bks.pid
+PID_FILE_2=${RUN_DIR}/lts.pid
+MONITRC_FILE=/etc/monit.d/bks.cfg
+LOG4J_FILE=${RUN_DIR}/log4j.properties
+LOG4J_FILE_LDS=${RUN_DIR}/log4j_lds.properties
+
+LOG_DIR=/media/ephemeral0/logs/bks
+LOG_FILE=${LOG_DIR}/bks.log
+LOG_FILE_LDS=${LOG_DIR}/lds.log
+
+source /usr/lib/hustler/bin/qubole-bash-lib.sh
+is_master=`nodeinfo is_master`
+
+# increase mmap system limit
+sudo sysctl -w vm.max_map_count=200000
+
+usage() {
+  echo "Usage: $0"
+  echo "$1"
+  echo "start and stop the Cache BookKeeper Server."
+  echo "$0 [start|stop]"
+  exit $2
+}
+
+setup-log4j-lds() {
+(cat << EOF
+
+log4j.rootLogger=INFO, R
+
+log4j.appender.R=org.apache.log4j.RollingFileAppender
+log4j.appender.R.File=${LOG_FILE_LDS}
+log4j.appender.R.MaxFileSize=10MB
+log4j.appender.R.MaxBackupIndex=2
+log4j.appender.R.layout=org.apache.log4j.PatternLayout
+log4j.appender.R.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss,SSS} %p %t %c{2}: %m%n
+EOF
+) >> $LOG4J_FILE_LDS
+}
+
+setup-log4j() {
+(cat << EOF
+
+log4j.rootLogger=INFO, R
+
+log4j.appender.R=org.apache.log4j.RollingFileAppender
+log4j.appender.R.File=${LOG_FILE}
+log4j.appender.R.MaxFileSize=10MB
+log4j.appender.R.MaxBackupIndex=2
+log4j.appender.R.layout=org.apache.log4j.PatternLayout
+log4j.appender.R.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss,SSS} %p %t %c{2}: %m%n
+EOF
+) >> $LOG4J_FILE
+}
+
+setup-perms() {
+   prefix="/media/ephemeral"
+   for i in {0..25}
+   do
+    if [[ -d "${prefix}${i}" ]]; then
+      mkdir -p ${prefix}${i}/fcache
+      chmod -R 777 ${prefix}${i}/fcache
+    fi
+  done
+}
+
+start() {
+  mkdir -p ${RUN_DIR}
+  mkdir -p ${LOG_DIR}
+  chmod -R 777 ${LOG_DIR}
+
+  setup-log4j
+  setup-log4j-lds
+  export HADOOP_OPTS="-Dlog4j.configuration=file://${LOG4J_FILE}"
+  # Set the fs impls as CachingNativeS3FileSystem for book-keeper. HADOOP_CUSTOM_OVERRIDES are the best bet to do this without affecting all hadoop jobs
+  # HADDOP_CUSTOM_OVERRIDES are Qubole specific and the values is '!' separated key=value pair with value base64 encoded
+  # We also disable filesystem cache
+  export HADOOP_CUSTOM_OVERRIDES='fs.s3.impl.disable.cache=dHJ1ZQ==!fs.s3n.impl.disable.cache=dHJ1ZQ==!fs.s3a.impl.disable.cache=dHJ1ZQ==!'
+  ulimit -n 100000
+  if [[ "$is_master" == "1" ]]; then
+    su yarn -c 'nohup /usr/lib/hadoop2/bin/hadoop jar /usr/lib/hadoop2/share/hadoop/tools/lib/rubix-bookkeeper-*.jar com.qubole.rubix.bookkeeper.BookKeeperServer -Drubix.cluster.on-master=true > /dev/null 2>&1  & echo "$!"' > ${PID_FILE}
+  else
+    su yarn -c 'nohup /usr/lib/hadoop2/bin/hadoop jar /usr/lib/hadoop2/share/hadoop/tools/lib/rubix-bookkeeper-*.jar com.qubole.rubix.bookkeeper.BookKeeperServer > /dev/null 2>&1  & echo "$!"' > ${PID_FILE}
+  fi
+  echo "Starting Cache BookKeeper server with pid `cat ${PID_FILE}`"
+
+  setup-perms
+  export HADOOP_OPTS="-Dlog4j.configuration=file://${LOG4J_FILE_LDS}"
+  su yarn -c 'nohup /usr/lib/hadoop2/bin/hadoop jar /usr/lib/hadoop2/share/hadoop/tools/lib/rubix-bookkeeper-*.jar com.qubole.rubix.bookkeeper.LocalDataTransferServer > /dev/null 2>&1 & echo "$!"' > ${PID_FILE_2}
+  echo "Starting Local Transfer server with pid `cat ${PID_FILE_2}`"
+  sleep 1
+}
+
+server-monitor() {
+  cat > ${MONITRC_FILE} <<-EOF
+set daemon 30
+set logfile /var/log/monit.log
+
+set httpd port 2812 and
+    use address localhost  # only accept connection from localhost
+    allow localhost        # allow localhost to connect to the server and
+
+check process bks with pidfile /media/ephemeral0/bks/bks.pid
+   start program = "/bin/bash -c '/usr/lib/hive1.2/bin/cache-bookkeeper start'"
+   stop program = "/bin/bash -c '/usr/lib/hive1.2/bin/cache-bookkeeper stop'"
+   if 5 restarts within 5 cycles then timeout
+
+check process lts with pidfile /media/ephemeral0/bks/lts.pid
+   start program = "/bin/bash -c '/usr/lib/hive1.2/bin/cache-bookkeeper start'"
+   stop program = "/bin/bash -c '/usr/lib/hive1.2/bin/cache-bookkeeper stop'"
+   if 5 restarts within 5 cycles then timeout
+EOF
+
+  chmod 600 ${MONITRC_FILE}
+  service monit restart
+}
+
+stop() {
+  kill -9 `cat ${PID_FILE}`
+  kill -9 `cat ${PID_FILE_2}`
+  rm -f ${PID_FILE}
+  rm -f ${PID_FILE_2}
+}
+
+cmd=$1
+
+case "$cmd" in
+  start) start;;
+  stop) stop;;
+  monitor) server-monitor;;
+  help) usage "" 0;;
+  *) usage "ERROR: Incorrect arguments" 1;;
+esac
+
+exit 0;
+
