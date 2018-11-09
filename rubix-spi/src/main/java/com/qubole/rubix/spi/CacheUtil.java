@@ -73,7 +73,6 @@ public class CacheUtil
    */
   public static int getCacheDiskCount(Configuration conf)
   {
-
     return getCacheDiskPathsMap(conf).size();
   }
 
