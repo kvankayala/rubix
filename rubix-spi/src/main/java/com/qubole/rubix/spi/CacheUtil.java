@@ -73,6 +73,7 @@ public class CacheUtil
    */
   public static int getCacheDiskCount(Configuration conf)
   {
+
     return getCacheDiskPathsMap(conf).size();
   }
 
@@ -84,11 +85,13 @@ public class CacheUtil
    */
   public static HashMap<Integer, String> getCacheDiskPathsMap(final Configuration conf)
   {
+    log.info(" Welcome to getCacheDiskPathsMap ");
     Supplier<HashMap<Integer, String>> diskPathMapSupplier = Suppliers.memoize(new Supplier<HashMap<Integer, String>>()
     {
       @Override
       public HashMap<Integer, String> get()
       {
+        log.info("Inside the Supplier ");
         final HashMap<Integer, String> dirPathMap = new HashMap<>();
         final List<String> dirPrefixList = getDirPrefixList(conf);
         final String dirSuffix = CacheConfig.getCacheDataDirSuffix(conf);
@@ -107,6 +110,7 @@ public class CacheUtil
         return dirPathMap;
       }
     });
+    log.info(" Bye getCacheDiskPathsMap ");
     return diskPathMapSupplier.get();
   }
 
@@ -311,6 +315,7 @@ public class CacheUtil
    * Determines whether a table is allowed to be cached.
    *
    * @param conf  The current Hadoop configuration.
+   *
    * @return True if the table can be cached, false otherwise.
    */
   private static boolean isTableAllowedToCache(Configuration conf)
