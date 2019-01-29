@@ -57,7 +57,9 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
   private boolean isRubixSchemeUsed;
   private URI uri;
   private Path workingDir;
-
+  private static Configuration localConf;
+  private static int singletonCounter = 0;
+  private static Integer lock = 1;
   private static CachingFileSystemStats statsMBean;
   public BookKeeperFactory bookKeeperFactory = new BookKeeperFactory();
 
@@ -101,8 +103,9 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
 
   public void setBookKeeper(BookKeeperFactory bookKeeperFactory, Configuration conf)
   {
+    log.info("Value of rValue in setBookKeeper " + localConf.get("team.rubix"));
     this.bookKeeperFactory = bookKeeperFactory;
-    this.setConf(conf);
+    this.setConf(localConf);
   }
 
   @Override
@@ -111,12 +114,13 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
     if (clusterManager == null) {
       throw new IOException("Cluster Manager not set");
     }
-    super.initialize(uri, conf);
+    super.initialize(uri, localConf);
+    log.info("Value of rValue in initialize " + localConf.get("team.rubix"));
     this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
     this.workingDir = new Path("/user", System.getProperty("user.name")).makeQualified(this);
     isRubixSchemeUsed = uri.getScheme().equals(CacheConfig.RUBIX_SCHEME);
     URI originalUri = getOriginalURI(uri);
-    fs.initialize(originalUri, conf);
+    fs.initialize(originalUri, localConf);
   }
 
   public synchronized void initializeClusterManager(Configuration conf, ClusterType clusterType)
@@ -125,7 +129,21 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
     if (clusterManager != null) {
       return;
     }
-
+    //localConf = new RubixConf(conf);
+    log.info("Value of Thread id Before : " + Thread.currentThread().getId());
+    log.info("Value of Singleton Counter Before : " + singletonCounter);
+    if(singletonCounter == 0) {
+      synchronized (lock) {
+        if(singletonCounter == 0) {
+          localConf = conf;
+          localConf.addResource(new Path("/usr/lib/rubix/conf/rubix-site.xml"));
+          singletonCounter++;
+          log.info("Value of Thread id Inside : " + Thread.currentThread().getId());
+        }
+      }
+    }
+    log.info("Value of rValue in ICM" + localConf.get("team.rubix"));
+    log.info("Value of Singleton Counter : " + singletonCounter);
     String clusterManagerClassName = CacheConfig.getClusterManagerClass(conf, clusterType);
     log.info("Initializing cluster manager : " + clusterManagerClassName);
 
@@ -134,7 +152,7 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
       Constructor constructor = clusterManagerClass.getConstructor();
       ClusterManager manager = (ClusterManager) constructor.newInstance();
 
-      manager.initialize(conf);
+      manager.initialize(localConf);
       setClusterManager(manager);
     }
     catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
@@ -158,7 +176,7 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
   {
     FSDataInputStream inputStream = null;
 
-    if (skipCache(path.toString(), getConf())) {
+    if (skipCache(path.toString(), localConf)) {
       inputStream = fs.open(path, bufferSize);
       cacheSkipped = true;
       return inputStream;
@@ -168,9 +186,9 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
         path.toUri().getPath());
     return new FSDataInputStream(
         new BufferedFSInputStream(
-            new CachingInputStream(this, originalPath, this.getConf(), statsMBean,
+            new CachingInputStream(this, originalPath, localConf, statsMBean,
                 clusterManager.getClusterType(), bookKeeperFactory, fs, bufferSize, statistics),
-            CacheConfig.getBlockSize(getConf())));
+            CacheConfig.getBlockSize(localConf)));
   }
 
   @Override

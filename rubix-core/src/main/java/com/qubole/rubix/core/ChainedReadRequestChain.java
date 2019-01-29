@@ -13,6 +13,8 @@
 package com.qubole.rubix.core;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.List;
  */
 public class ChainedReadRequestChain extends ReadRequestChain
 {
+  private static final Log log = LogFactory.getLog(ChainedReadRequestChain.class);
   private List<ReadRequestChain> readRequestChains = new ArrayList<>();
 
   public ChainedReadRequestChain addReadRequestChain(ReadRequestChain readRequestChain)
@@ -62,6 +65,7 @@ public class ChainedReadRequestChain extends ReadRequestChain
 
   public void updateCacheStatus(String remotePath, long fileSize, long lastModified, int blockSize, Configuration conf)
   {
+    log.info("Value of rValue in updateCacheStatus " + conf.get("team.rubix"));
     for (ReadRequestChain readRequestChain : readRequestChains) {
       readRequestChain.updateCacheStatus(remotePath, fileSize, lastModified, blockSize, conf);
     }

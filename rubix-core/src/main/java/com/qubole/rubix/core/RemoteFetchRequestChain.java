@@ -58,6 +58,7 @@ public class RemoteFetchRequestChain extends ReadRequestChain
     RetryingBookkeeperClient client = null;
     try {
       client = bookKeeperFactory.createBookKeeperClient(remoteNodeLocation, conf);
+      log.info("Value of rValue in call of RemoteFetchRequestChain " + conf.get("team.rubix"));
       for (ReadRequest request : readRequests) {
         log.info("RemoteFetchRequest from : " + remoteNodeLocation + " Start : " + request.backendReadStart +
                 " of length " + request.getBackendReadLength());

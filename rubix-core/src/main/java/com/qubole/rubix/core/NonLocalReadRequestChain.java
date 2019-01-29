@@ -66,6 +66,7 @@ public class NonLocalReadRequestChain extends ReadRequestChain
     this.clusterType = clusterType;
     this.strictMode = strictMode;
     this.statistics = statistics;
+    log.info("Value of rValue in NonLocalReadRequestChain " + conf.get("team.rubix"));
   }
 
   public ReadRequestChainStats getStats()

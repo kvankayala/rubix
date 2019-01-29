@@ -59,6 +59,7 @@ public class NonLocalRequestChain extends ReadRequestChain
                               boolean strictMode, FileSystem.Statistics statistics, long startBlock,
                               long endBlock)
   {
+    log.info("Value of rValue in NonLocalRequestChain " + conf.get("team.rubix"));
     this.remoteNodeName = remoteNodeName;
     this.remoteFileSystem = remoteFileSystem;
     this.lastModified = lastModified;

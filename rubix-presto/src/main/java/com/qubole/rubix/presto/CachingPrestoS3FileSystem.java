@@ -50,3 +50,4 @@ public class CachingPrestoS3FileSystem extends CachingFileSystem<PrestoS3FileSys
     return SCHEME;
   }
 }
+
