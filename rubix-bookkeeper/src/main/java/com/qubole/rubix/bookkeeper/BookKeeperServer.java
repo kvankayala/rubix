@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.thrift.shaded.server.TServer;
@@ -35,7 +36,9 @@ import org.apache.thrift.shaded.transport.TTransportException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import static com.qubole.rubix.spi.CacheConfig.getServerMaxThreads;
 import static com.qubole.rubix.spi.CacheConfig.getServerPort;
@@ -57,6 +60,8 @@ public class BookKeeperServer extends Configured implements Tool
 
   private static Log log = LogFactory.getLog(BookKeeperServer.class.getName());
   private BookKeeperMetrics bookKeeperMetrics;
+  private static int singletonCounter = 0;
+  private static Integer lock = 1;
 
   public BookKeeperServer()
   {
@@ -71,6 +76,15 @@ public class BookKeeperServer extends Configured implements Tool
   public int run(String[] args) throws Exception
   {
     conf = this.getConf();
+    synchronized (lock) {
+      if(singletonCounter == 0) {
+        Configuration localConf=null;
+        localConf.addResource(new Path("/usr/lib/rubix/etc/rubix-site.xml"));
+        Iterator<Map.Entry<String,String>> itr = conf.iterator();
+        singletonCounter++;
+        log.info("Value of Thread id Inside : " + Thread.currentThread().getId());
+      }
+    }
     Runnable bookKeeperServer = new Runnable()
     {
       public void run()
@@ -84,6 +98,7 @@ public class BookKeeperServer extends Configured implements Tool
 
   public void startServer(Configuration conf, MetricRegistry metricsRegistry)
   {
+    log.info("Value of configuration rubix.qubole.team : " + conf.get("rubix.qubole.team"));
     metrics = metricsRegistry;
     try {
       if (CacheConfig.isOnMaster(conf)) {

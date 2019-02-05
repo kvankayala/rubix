@@ -136,7 +136,7 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
       synchronized (lock) {
         if(singletonCounter == 0) {
           localConf = conf;
-          localConf.addResource(new Path("/usr/lib/rubix/conf/rubix-site.xml"));
+          localConf.addResource(new Path("/usr/lib/rubix/etc/rubix-site.xml"));
           singletonCounter++;
           log.info("Value of Thread id Inside : " + Thread.currentThread().getId());
         }
