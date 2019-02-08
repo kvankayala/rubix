@@ -24,7 +24,6 @@ import java.util.List;
  */
 public class ChainedReadRequestChain extends ReadRequestChain
 {
-  private static final Log log = LogFactory.getLog(ChainedReadRequestChain.class);
   private List<ReadRequestChain> readRequestChains = new ArrayList<>();
 
   public ChainedReadRequestChain addReadRequestChain(ReadRequestChain readRequestChain)
@@ -65,7 +64,6 @@ public class ChainedReadRequestChain extends ReadRequestChain
 
   public void updateCacheStatus(String remotePath, long fileSize, long lastModified, int blockSize, Configuration conf)
   {
-    log.info("Value of rValue in updateCacheStatus " + conf.get("team.rubix"));
     for (ReadRequestChain readRequestChain : readRequestChains) {
       readRequestChain.updateCacheStatus(remotePath, fileSize, lastModified, blockSize, conf);
     }

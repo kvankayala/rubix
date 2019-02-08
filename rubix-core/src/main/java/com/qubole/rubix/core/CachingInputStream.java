@@ -89,7 +89,6 @@ public class CachingInputStream extends FSInputStream
                             int bufferSize, FileSystem.Statistics statistics) throws IOException
   {
     initialize(backendPath.toString(), conf, bookKeeperFactory);
-    log.info("Value of rValue in CachingInputStream " + conf.get("team.rubix"));
     this.bookKeeperFactory = bookKeeperFactory;
     this.remotePath = backendPath.toString();
     this.remoteFileSystem = remoteFileSystem;
@@ -135,7 +134,6 @@ public class CachingInputStream extends FSInputStream
   private void initialize(String backendPath, Configuration conf, BookKeeperFactory bookKeeperFactory)
   {
     this.conf = conf;
-    log.info("Value of rValue in CachingInputStream : " + conf.get("team.rubix"));
     this.strictMode = CacheConfig.isStrictMode(conf);
     try {
       this.bookKeeperClient = bookKeeperFactory.createBookKeeperClient(conf);
