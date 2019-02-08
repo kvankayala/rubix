@@ -113,9 +113,6 @@ public class BookKeeperServer extends Configured implements Tool
 
   public void startServer(Configuration conf, MetricRegistry metricsRegistry)
   {
-    log.info("Value of configuration rubix.qubole.team : " + conf.get("rubix.qubole.team"));
-    log.info("Value of configuration qubole.team : " + conf.get("qubole.team"));
-
     metrics = metricsRegistry;
     try {
       if (CacheConfig.isOnMaster(conf)) {

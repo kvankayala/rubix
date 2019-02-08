@@ -109,8 +109,6 @@ public class LocalDataTransferServer extends Configured implements Tool
 
   public static void startServer(Configuration conf, MetricRegistry metricRegistry)
   {
-    log.info("Value of configuration rubix.qubole.team : " + conf.get("rubix.qubole.team"));
-    log.info("Value of configuration qubole.team : " + conf.get("qubole.team"));
     metrics = metricRegistry;
     registerMetrics(conf);
 
