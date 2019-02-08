@@ -30,8 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-//import java.util.Random;
-import java.security.SecureRandom;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -131,8 +130,7 @@ public class TestHadoop2ClusterManagerUtil
   {
     String saltchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
     StringBuilder salt = new StringBuilder();
-    //Random rnd = new Random();
-    SecureRandom rnd = new SecureRandom();
+    Random rnd = new Random();
     while (salt.length() < 18) { // length of the random string.
       int index = (int) (rnd.nextFloat() * saltchars.length());
       salt.append(saltchars.charAt(index));

@@ -30,6 +30,7 @@ public class CacheConfig
 {
   public static final String RUBIX_SCHEME = "rubix";
 
+  private static final String KEY_RUBIX_SITE_LOCATION = "rubix.site.location";
   private static final String KEY_BLOCK_SIZE = "hadoop.cache.data.block-size";
   private static final String KEY_CACHE_ENABLED = "hadoop.cache.data.enabled";
   private static final String KEY_CACHE_METADATA_FILE_SUFFIX = "rubix.cache.metadata.file.suffix";
@@ -88,6 +89,7 @@ public class CacheConfig
   private static final String KEY_MAX_CACHE_SIZE = "rubix.cache.fullness.size";
 
   // default values
+  private static final String DEFAULT_RUBIX_SITE_LOCATION = "/usr/lib/rubix/etc/rubix-site.xml";
   private static final int DEFAULT_BLOCK_SIZE = 1 * 1024 * 1024; // 1MB
   private static final int DEFAULT_CLIENT_TIMEOUT = 10000; // ms
   private static final String DEFAULT_CACHE_METADATA_FILE_SUFFIX = "_mdfile";
@@ -148,6 +150,11 @@ public class CacheConfig
 
   private CacheConfig()
   {
+  }
+
+  public static String getKeyRubixSiteLocation(Configuration conf)
+  {
+    return conf.get(KEY_RUBIX_SITE_LOCATION, DEFAULT_RUBIX_SITE_LOCATION);
   }
 
   public static int getBlockSize(Configuration conf)
@@ -438,6 +445,11 @@ public class CacheConfig
   public static int getStaleFileInfoExpiryPeriod(Configuration conf)
   {
     return conf.getInt(KEY_STALE_FILEINFO_EXPIRY_PERIOD, DEFAULT_STALE_FILEINFO_EXPIRY_PERIOD);
+  }
+
+  public static void setKeyRubixSiteLocation(Configuration conf, String dirPrefix)
+  {
+    conf.set(KEY_RUBIX_SITE_LOCATION, dirPrefix);
   }
 
   public static boolean isCleanupFilesDuringStartEnabled(Configuration conf)

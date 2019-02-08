@@ -36,9 +36,10 @@ import org.apache.thrift.shaded.transport.TTransportException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.qubole.rubix.spi.CacheConfig.getServerMaxThreads;
 import static com.qubole.rubix.spi.CacheConfig.getServerPort;
@@ -60,7 +61,8 @@ public class BookKeeperServer extends Configured implements Tool
 
   private static Log log = LogFactory.getLog(BookKeeperServer.class.getName());
   private BookKeeperMetrics bookKeeperMetrics;
-  private static int singletonCounter = 0;
+  protected static Configuration localConf;
+  protected static int singletonCounter;
   private static Integer lock = 1;
 
   public BookKeeperServer()
@@ -75,16 +77,7 @@ public class BookKeeperServer extends Configured implements Tool
   @Override
   public int run(String[] args) throws Exception
   {
-    conf = this.getConf();
-    synchronized (lock) {
-      if(singletonCounter == 0) {
-        Configuration localConf=null;
-        localConf.addResource(new Path("/usr/lib/rubix/etc/rubix-site.xml"));
-        Iterator<Map.Entry<String,String>> itr = conf.iterator();
-        singletonCounter++;
-        log.info("Value of Thread id Inside : " + Thread.currentThread().getId());
-      }
-    }
+    conf = setRubixConf(this.getConf());
     Runnable bookKeeperServer = new Runnable()
     {
       public void run()
@@ -96,9 +89,33 @@ public class BookKeeperServer extends Configured implements Tool
     return 0;
   }
 
+  public Configuration setRubixConf(Configuration conf)
+  {
+    if (singletonCounter == 0) {
+      synchronized (lock) {
+        if (singletonCounter == 0) {
+          singletonCounter++;
+          localConf = new Configuration();
+          String rubixSiteXml = CacheConfig.getKeyRubixSiteLocation(conf);
+          localConf.addResource(new Path(rubixSiteXml));
+          Iterator<Map.Entry<String, String>> itr = localConf.iterator();
+          while (itr.hasNext()) {
+            Map.Entry<String, String> item = itr.next();
+            if (conf.get(item.getKey()) == null) {
+              conf.set(item.getKey(), item.getValue());
+            }
+          }
+        }
+      }
+    }
+    return conf;
+  }
+
   public void startServer(Configuration conf, MetricRegistry metricsRegistry)
   {
     log.info("Value of configuration rubix.qubole.team : " + conf.get("rubix.qubole.team"));
+    log.info("Value of configuration qubole.team : " + conf.get("qubole.team"));
+
     metrics = metricsRegistry;
     try {
       if (CacheConfig.isOnMaster(conf)) {

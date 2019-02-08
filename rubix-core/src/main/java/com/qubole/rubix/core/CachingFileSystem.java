@@ -39,7 +39,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static com.qubole.rubix.spi.CacheUtil.skipCache;
@@ -57,10 +59,10 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
   private boolean isRubixSchemeUsed;
   private URI uri;
   private Path workingDir;
-  private static Configuration localConf;
-  private static int singletonCounter = 0;
-  private static Integer lock = 1;
   private static CachingFileSystemStats statsMBean;
+  private static Integer lock = 1;
+  protected static Configuration localConf;
+  protected static int singletonCounter;
   public BookKeeperFactory bookKeeperFactory = new BookKeeperFactory();
 
   static {
@@ -115,12 +117,36 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
       throw new IOException("Cluster Manager not set");
     }
     super.initialize(uri, localConf);
-    log.info("Value of rValue in initialize " + localConf.get("team.rubix"));
     this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
     this.workingDir = new Path("/user", System.getProperty("user.name")).makeQualified(this);
     isRubixSchemeUsed = uri.getScheme().equals(CacheConfig.RUBIX_SCHEME);
     URI originalUri = getOriginalURI(uri);
     fs.initialize(originalUri, localConf);
+  }
+
+  public void updateConf(Configuration conf)
+  {
+    if (singletonCounter == 0) {
+      synchronized (lock) {
+        if (singletonCounter == 0) {
+          singletonCounter++;
+          localConf = new Configuration();
+          String rubixSiteXml = CacheConfig.getKeyRubixSiteLocation(conf);
+          localConf.addResource(new Path(rubixSiteXml));
+          log.info("File Location in CFS : " + rubixSiteXml);
+          log.info("Value of Thread id Inside : " + Thread.currentThread().getId());
+          Iterator<Map.Entry<String, String>> itr = localConf.iterator();
+          while (itr.hasNext()) {
+            Map.Entry<String, String> item = itr.next();
+            if (conf.get(item.getKey()) == null) {
+              conf.set(item.getKey(), item.getValue());
+            }
+          }
+        }
+        localConf = conf;
+      }
+    }
+    log.info("Value of rValue in ICM" + localConf.get("team.rubix"));
   }
 
   public synchronized void initializeClusterManager(Configuration conf, ClusterType clusterType)
@@ -129,21 +155,7 @@ public abstract class CachingFileSystem<T extends FileSystem> extends FileSystem
     if (clusterManager != null) {
       return;
     }
-    //localConf = new RubixConf(conf);
-    log.info("Value of Thread id Before : " + Thread.currentThread().getId());
-    log.info("Value of Singleton Counter Before : " + singletonCounter);
-    if(singletonCounter == 0) {
-      synchronized (lock) {
-        if(singletonCounter == 0) {
-          localConf = conf;
-          localConf.addResource(new Path("/usr/lib/rubix/etc/rubix-site.xml"));
-          singletonCounter++;
-          log.info("Value of Thread id Inside : " + Thread.currentThread().getId());
-        }
-      }
-    }
-    log.info("Value of rValue in ICM" + localConf.get("team.rubix"));
-    log.info("Value of Singleton Counter : " + singletonCounter);
+    updateConf(conf);
     String clusterManagerClassName = CacheConfig.getClusterManagerClass(conf, clusterType);
     log.info("Initializing cluster manager : " + clusterManagerClassName);
 

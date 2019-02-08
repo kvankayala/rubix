@@ -32,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.thrift.shaded.TException;
@@ -45,7 +46,9 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -61,8 +64,11 @@ public class LocalDataTransferServer extends Configured implements Tool
   private static LocalServer localServer;
   private static MetricRegistry metrics;
   private static BookKeeperMetrics bookKeeperMetrics;
+  protected static Configuration localConf;
+  protected static int singletonCounter;
+  private static Integer lock = 1;
 
-  private LocalDataTransferServer()
+  public LocalDataTransferServer()
   {
   }
 
@@ -74,13 +80,37 @@ public class LocalDataTransferServer extends Configured implements Tool
   @Override
   public int run(String[] args) throws Exception
   {
-    conf = this.getConf();
+    conf = setRubixConf(this.getConf());
     startServer(conf, new MetricRegistry());
     return 0;
   }
 
+  public Configuration setRubixConf(Configuration conf)
+  {
+    if (singletonCounter == 0) {
+      synchronized (lock) {
+        if (singletonCounter == 0) {
+          singletonCounter++;
+          localConf = new Configuration();
+          String rubixSiteXml = CacheConfig.getKeyRubixSiteLocation(conf);
+          localConf.addResource(new Path(rubixSiteXml));
+          Iterator<Map.Entry<String, String>> itr = localConf.iterator();
+          while (itr.hasNext()) {
+            Map.Entry<String, String> item = itr.next();
+            if (conf.get(item.getKey()) == null) {
+              conf.set(item.getKey(), item.getValue());
+            }
+          }
+        }
+      }
+    }
+    return conf;
+  }
+
   public static void startServer(Configuration conf, MetricRegistry metricRegistry)
   {
+    log.info("Value of configuration rubix.qubole.team : " + conf.get("rubix.qubole.team"));
+    log.info("Value of configuration qubole.team : " + conf.get("qubole.team"));
     metrics = metricRegistry;
     registerMetrics(conf);
 
