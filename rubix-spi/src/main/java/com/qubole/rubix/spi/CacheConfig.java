@@ -447,9 +447,9 @@ public class CacheConfig
     return conf.getInt(KEY_STALE_FILEINFO_EXPIRY_PERIOD, DEFAULT_STALE_FILEINFO_EXPIRY_PERIOD);
   }
 
-  public static void setKeyRubixSiteLocation(Configuration conf, String dirPrefix)
+  public static void setKeyRubixSiteLocation(Configuration conf, String fileLocation)
   {
-    conf.set(KEY_RUBIX_SITE_LOCATION, dirPrefix);
+    conf.set(KEY_RUBIX_SITE_LOCATION, fileLocation);
   }
 
   public static boolean isCleanupFilesDuringStartEnabled(Configuration conf)
