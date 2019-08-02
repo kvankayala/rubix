@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  rubix-master:
+    build:
+      context: .
+      args:
+        is_master: "true"
+    volumes:
+      - ${DATADIR}:/tmp/rubixTests
+    networks:
+      default:
+        ipv4_address: 172.18.8.0
+
+
+

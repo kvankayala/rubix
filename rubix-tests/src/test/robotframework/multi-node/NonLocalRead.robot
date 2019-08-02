@@ -44,7 +44,7 @@ Simple non-local read test case
     [Tags]  nonlocal
     [Documentation]  A simple non-local read test
 
-    [Setup]  Multi-node test setup  ${DATADIR}  %{HOST_TEST_DATA_DIR}
+    [Setup]  Multi-node test setup  ${DATADIR}  %{HOST_TEST_DATA_DIR}  3
 
     Generate test files  ${FILEPREFIX}  ${FILE_LENGTH}  ${NUM_TEST_FILES}  1
 
@@ -59,13 +59,13 @@ Simple non-local read test case
 
     Verify metric value on node  172.18.8.1  1099  ${METRIC_NONLOCAL_REQUESTS}  ${NUM_EXPECTED_REQUESTS_NONLOCAL}
 
-    [Teardown]  Multi-node test teardown  ${DATADIR}
+#    [Teardown]  Multi-node test teardown  ${DATADIR}
 
 Simple local read test case
     [Tags]  local
     [Documentation]  A simple local read test
 
-    [Setup]  Multi-node test setup  ${DATADIR}  %{HOST_TEST_DATA_DIR}
+    [Setup]  Multi-node test setup  ${DATADIR}  %{HOST_TEST_DATA_DIR}  3
 
     Generate test files  ${FILEPREFIX}  ${FILE_LENGTH}  ${NUM_TEST_FILES}  1
 

@@ -3,17 +3,16 @@
 RUBIX_DOCKER_NETWORK=network-rubix-build
 RUBIX_DOCKER_TEST_DATA_DIR=/tmp/rubixTests
 
+
 initialize-docker-container() {
     echo "=== Building RubiX build Docker image ==="
 #    echo "=== Fetching RubiX build Docker image ==="
 #    docker pull quboleinc/hadoop_mvn_thrift
     docker build --tag=rubix-build . #> docker-rubix-build.log 2>&1
-
     docker network create \
     --driver=bridge \
     --subnet=172.18.0.0/16 \
     ${RUBIX_DOCKER_NETWORK}
-
     mkdir -p ${RUBIX_DOCKER_TEST_DATA_DIR}
 }
 

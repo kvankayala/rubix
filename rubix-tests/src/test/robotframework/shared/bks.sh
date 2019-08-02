@@ -80,9 +80,89 @@ copy-jars-for-containers() {
   cp ${RUBIX_CORE_TEST_JAR} ${SCRIPT_DIR}/docker/jars/rubix-core_tests.jar
 }
 
-start-cluster() {
-  SCRIPT_DIR=$(dirname "$0")
 
+getNumberOfWorkers () {
+  echo "testing 3A"
+  numWorkerString=$1
+  echo ${numWorkerString}
+  echo "testing 3B"
+  array=$(echo $numWorkerString | tr "=" "\n")
+  echo ${array}
+  echo "testing 3C"
+  value=`echo $array | awk '{ print $2 }'`
+  echo ${value}
+  echo "testing 3D"
+  return $value
+}
+
+create-docker-compose() {
+  echo "testing 5A"
+  numberOfWOrkers=$1
+  SCRIPT_DIR=$2
+  echo "testing 5B"
+#  bbb="version: '3.7'\nservices:\n\srubix-master:\n\s\sbuild:\n\t\t\tcontext: .\n\t\t\targs:\n\t\t\t\tis_master: \"true\"\n\t\tvolumes:\n\t\t\t- \${DATADIR}:/tmp/rubixTests\n\t\tnetworks:\n\t\t\tdefault:\n\t\t\t\tipv4_address: 172.18.8.0\n"
+  bbb="version: '3.7'
+services:
+  rubix-master:
+    build:
+      context: .
+      args:
+        is_master: \"true\"
+  volumes:
+    \${DATADIR}:/tmp/rubixTests
+  networks:
+    default:
+      ipv4_address:172.18.8.0"
+  #aaa=$("\n\t\tdepends_on:\n\t\t\t- rubix-master\n\t\tbuild:\n\t\t\tcontext: .\n\t\t\targs:\n\t\t\t\tis_master: \"false\"\n\t\tvolumes:\n\t\t\t- \${DATADIR}:/tmp/rubixTests\n\t\tnetworks:\n\t\t\tdefault:\n\t\t\t\tipv4_address:")
+  aaa="
+    depends_on:
+     - rubix-master
+    build:
+      context: .
+      args:
+        is_master: \"false\"
+    volumes:
+      \${DATADIR}:/tmp/rubixTests
+    networks:
+      default:
+        ipv4_address:"
+  echo "testing 5C"
+  echo ${SCRIPT_DIR}
+  echo "testing 5D"
+  rm -f ${SCRIPT_DIR}/docker/docker-compose.yml
+  echo "printing 2"
+  echo -e "${bbb}" >> ${SCRIPT_DIR}/docker/docker-compose.yml
+
+  for idx in $(seq 1 $(($numberOfWOrkers)))
+  do
+     echo ${idx}
+     ipAddress=172.18.8.${idx}
+     echo ${ipAddress}
+     serviceName=rubix-worker-${idx}
+     echo ${serviceName}
+     serviceEntry="  ${serviceName}:${aaa}${ipAddress}"
+#     echo -e "${serviceEntry}" >> ${SCRIPT_DIR}/docker/docker-compose.yml
+  done
+  echo "printing 3"
+}
+
+start-cluster() {
+#  BKS_OPTIONS=$@
+#  BKS_OPTIONS=${@:1:$#-1}
+  echo "testing 2"
+  lastOption="${@: -1}"
+  echo ${lastOption}
+  echo "testing 3"
+  set +e
+  getNumberOfWorkers ${lastOption}
+  numberOfWorkers=`echo $?`
+  echo ${numberOfWorkers}
+  set -e
+  SCRIPT_DIR=$(dirname "$0")
+  echo "testing 5"
+#  create-docker-compose ${numberOfWorkers} ${SCRIPT_DIR}
+#  python ${SCRIPT_DIR}/docker/testing.py ${numberOfWorkers} ${SCRIPT_DIR}
+  echo "testing 6"
   rm -f ${SCRIPT_DIR}/docker/jars/*
   mkdir -p ${SCRIPT_DIR}/docker/jars
 
@@ -145,6 +225,7 @@ stop-bks() {
 }
 
 cmd=$1
+echo "testing 1"
 case "$cmd" in
   start-bks) shift ; start-bks $@;;
   stop-bks) shift ; stop-bks $@;;

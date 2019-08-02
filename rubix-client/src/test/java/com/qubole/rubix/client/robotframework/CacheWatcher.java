@@ -58,7 +58,7 @@ public class CacheWatcher
   {
     // System.setProperty("log4j.configuration", "file:/Users/jordanw/Development/Projects/Qubole/RubiX/log4j_cache.properties");
     // System.out.println("Current directory: " + System.getProperty("user.dir"));
-    PropertyConfigurator.configure("/Users/jordanw/Development/Projects/Qubole/RubiX/log4j_cache.properties");
+    PropertyConfigurator.configure("/Users/kvankayala/src/rubix/log4j_cache.properties");
     log.warn("=== ===  New Watcher  === ===");
 
     this.watcher = FileSystems.getDefault().newWatchService();

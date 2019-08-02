@@ -52,9 +52,9 @@ Stop BKS
 
 Multi-node test setup
     [Documentation]  Performs steps necessary for setting up a multi-node test case.
-    [Arguments]  ${testDataDir}  ${testMountDir}
+    [Arguments]  ${testDataDir}  ${testMountDir}  ${numberOfWorkerNodes}
     CREATE DIRECTORY  ${testDataDir}
-    Start RubiX cluster  ${testMountDir}
+    Start RubiX cluster  ${testMountDir}  ${numberOfWorkerNodes}
 
 Multi-node test teardown
     [Documentation]  Performs steps necessary for tearing down a multi-node test case.
@@ -63,10 +63,10 @@ Multi-node test teardown
     REMOVE DIRECTORY  ${dataDir}  recursive=${True}
 
 Start RubiX cluster
-    [Arguments]  ${dataDir}
-    ${output} =  RUN  ${CURDIR}${/}bks.sh start-cluster ${dataDir}
+    [Arguments]  ${dataDir}  ${numberOfWorkerNodes}
+    ${output} =  RUN  ${CURDIR}${/}bks.sh start-cluster ${dataDir} numberOfWorkerNodes=${numberOfWorkerNodes}
     LOG  ${output}
-    SLEEP  15s  Allow time for daemons to start on cluster
+    SLEEP  30s  Allow time for daemons to start on cluster
 
 Stop RubiX cluster
     [Arguments]  ${dataDir}
