@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option java_package = "com.qubole.rubix.spi.grpc";
+
+package BookKeeperService;
+
+service BookKeeperService {
+  rpc getCacheStatus(CacheStatusRequest) returns (list<BlockLocation>) {}
+
+}
+
+
+enum Location {
+CACHED,
+LOCAL,
+NON_LOCAL
+}
+
+message BlockLocation {
+  Location location;
+  string remoteLocation;
+}
+
+message FileInfo {
+	int64 fileSize;
+	int64 lastModified;
+}
+
+message CacheStatusRequest {
+		string remotePath;
+		int64 fileLength;
+		int64 lastModified;
+		int64 startBlock;
+		int64 endBlock;
+		int32 clusterType;
+		bool incrMetrics = false;
+}
