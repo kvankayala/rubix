@@ -12,6 +12,7 @@
  */
 package com.qubole.rubix.client.robotframework.container.server;
 
+import com.qubole.rubix.client.robotframework.TestClientReadRequest;
 import com.qubole.rubix.client.robotframework.container.client.GetCacheMetricsRequest;
 import com.qubole.rubix.client.robotframework.container.client.ReadDataRequestParams;
 import com.qubole.rubix.client.robotframework.container.client.ReadDataWithFileSystemRequest;
@@ -25,4 +26,6 @@ public interface RequestServer extends Remote
   Map<String, Double> getCacheMetrics(GetCacheMetricsRequest request) throws RemoteException;
 
   boolean cacheDataUsingClientFileSystem(ReadDataWithFileSystemRequest request, ReadDataRequestParams params) throws RemoteException;
+
+  boolean executeTask(TestClientReadRequest testReadRequest);
 }

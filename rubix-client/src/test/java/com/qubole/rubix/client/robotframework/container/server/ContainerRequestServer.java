@@ -12,6 +12,7 @@
  */
 package com.qubole.rubix.client.robotframework.container.server;
 
+import com.qubole.rubix.client.robotframework.TestClientReadRequest;
 import com.qubole.rubix.client.robotframework.container.client.GetCacheMetricsRequest;
 import com.qubole.rubix.client.robotframework.container.client.ReadDataRequestParams;
 import com.qubole.rubix.client.robotframework.container.client.ReadDataWithFileSystemRequest;
@@ -41,6 +42,8 @@ public class ContainerRequestServer implements RequestServer
 
   private final BookKeeperFactory factory = new BookKeeperFactory();
   private final Configuration conf = new Configuration();
+  //private static MockCachingFileSystem mCFS = new MockCachingFileSystem();
+  final MockCachingFileSystem mockFS = new MockCachingFileSystem();
 
   public ContainerRequestServer()
   {
@@ -69,6 +72,27 @@ public class ContainerRequestServer implements RequestServer
       log.error("Error caching data using CachingFileSystem", e);
     }
     return false;
+  }
+
+  @Override
+  public boolean executeTask(TestClientReadRequest testReadRequest)
+  {
+    try {
+      FSDataInputStream fsstream = createFSInputStream(testReadRequest.getRemotePath(), (int) testReadRequest.getFileLength());
+      long iPos = fsstream.getPos();
+      fsstream.read();
+      long finalPos = fsstream.getPos();
+      log.info(String.format("Value of iPos :%s and finalPos :%s", iPos, finalPos));
+    }
+    catch (Exception ex) {
+      log.error("Exception While opeinig the file :", ex);
+    }
+    return false;
+  }
+
+  public int testingTheFunction()
+  {
+    return 1;
   }
 
   /**
@@ -103,7 +127,6 @@ public class ContainerRequestServer implements RequestServer
    */
   private FSDataInputStream createFSInputStream(String remotePath, int readLength) throws IOException
   {
-    final MockCachingFileSystem mockFS = new MockCachingFileSystem();
     mockFS.initialize(URI.create(remotePath), conf);
     return mockFS.open(new Path(remotePath), readLength);
   }

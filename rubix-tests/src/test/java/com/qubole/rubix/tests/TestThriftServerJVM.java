@@ -177,7 +177,7 @@ public class TestThriftServerJVM extends Configured
     log.info(" Value of Result : " + result);
   }
 
-  @Test(enabled = true, expectedExceptions = org.apache.thrift.shaded.transport.TTransportException.class)
+  //@Test(enabled = true, expectedExceptions = org.apache.thrift.shaded.transport.TTransportException.class)
   public void testCreateBookKeeperClient_OnNotRunningPort() throws IOException, InterruptedException, Exception
   {
     //1234 is a random port to test if TTransportException is being thrown or not
@@ -186,7 +186,7 @@ public class TestThriftServerJVM extends Configured
     bookKeeperFactory.createBookKeeperClient(host, conf);
   }
 
-  @Test
+  //@Test
   public void testBookKeeperHealthMain() throws IOException, InterruptedException, TTransportException, TException
   {
     String healthCheckCmd = hadoopDirectory + " jar " + rubixclientJarPath + BookKeeperHealthClass;

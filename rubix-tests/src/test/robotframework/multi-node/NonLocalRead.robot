@@ -3,6 +3,7 @@ Documentation   RubiX Multi-Node Integration Tests
 Resource        ..${/}shared${/}setup.robot
 Resource        ..${/}shared${/}bookkeeper.robot
 Library         com.qubole.rubix.client.robotframework.container.client.ContainerRequestClient
+Library         com.qubole.rubix.client.robotframework.container.server.ContainerRequestServer
 
 *** Variables ***
 # Cache settings
@@ -38,6 +39,16 @@ ${NUM_EXPECTED_REQUESTS_REMOTE}    1
 
 *** Test Cases ***
 
+Simple phase 2 test
+    [Tags]  phase2
+    [Documentation]  Testing Phase 2 Changes
+
+    [Setup]  Multi-node test setup  ${DATADIR}  %{HOST_TEST_DATA_DIR}  1
+
+    Generate test files  ${FILEPREFIX}  ${FILE_LENGTH}  ${NUM_TEST_FILES}  1
+
+    testingTheFunction
+
 #####  APPLY FIXES FROM OTHER TEST #####
 
 Simple non-local read test case
@@ -59,7 +70,7 @@ Simple non-local read test case
 
     Verify metric value on node  172.18.8.1  1099  ${METRIC_NONLOCAL_REQUESTS}  ${NUM_EXPECTED_REQUESTS_NONLOCAL}
 
-#    [Teardown]  Multi-node test teardown  ${DATADIR}
+    [Teardown]  Multi-node test teardown  ${DATADIR}
 
 Simple local read test case
     [Tags]  local
