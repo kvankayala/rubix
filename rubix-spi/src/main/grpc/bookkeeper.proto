@@ -4,34 +4,38 @@ option java_package = "com.qubole.rubix.spi.grpc";
 
 package BookKeeperService;
 
-service BookKeeperService {
-  rpc getCacheStatus(CacheStatusRequest) returns (list<BlockLocation>) {}
-
-}
-
 
 enum Location {
-CACHED,
-LOCAL,
-NON_LOCAL
+CACHED = 0;
+LOCAL = 1 ;
+NON_LOCAL = 2;
+}
+
+message BlockLocationResponse {
+  repeated BlockLocation blockLocation = 1;
 }
 
 message BlockLocation {
-  Location location;
-  string remoteLocation;
+  Location location = 1;
+  string remoteLocation =2;
 }
 
 message FileInfo {
-	int64 fileSize;
-	int64 lastModified;
+	int64 fileSize = 1;
+	int64 lastModified = 2;
 }
 
 message CacheStatusRequest {
-		string remotePath;
-		int64 fileLength;
-		int64 lastModified;
-		int64 startBlock;
-		int64 endBlock;
-		int32 clusterType;
-		bool incrMetrics = false;
+		string remotePath = 1;
+		int64 fileLength = 2;
+		int64 lastModified = 3;
+		int64 startBlock = 4;
+		int64 endBlock = 5;
+		int32 clusterType = 6;
+		bool incrMetrics = 7;
+}
+
+service BookKeeperService {
+  rpc getCacheStatus(CacheStatusRequest) returns ( BlockLocationResponse ) {}
+
 }
